@@ -10,10 +10,6 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 model, preprocess = clip.load("ViT-B/32", device=device)
 
 def clip_image(image_path, target_text):
-    """
-    ターゲットテキストと、その他のネガティブプロンプトとの確率を計算し、
-    ターゲットの確率(0.0~1.0)を返します。
-    """
     # 比較対象を設定
     # 以下がtext="a res car"の場合の例
     texts = [target_text, "a blue car", "a orange car", "a yellow car", "a white car", "a black car", "a motorcycle", "a bicycle"]    
@@ -41,13 +37,11 @@ def main():
     
     args = parser.parse_args()
 
-    # コピー先ディレクトリがなければ作成
     if not os.path.exists(args.dest_dir):
         os.makedirs(args.dest_dir)
         print(f"Created directory: {args.dest_dir}")
 
     image_files = []
-    # 大文字小文字の両方に対応
     for ext in ['*.jpg', '*.jpeg', '*.png', '*.JPG', '*.JPEG', '*.PNG']:
         image_files.extend(glob.glob(os.path.join(args.input_dir, ext)))
     
@@ -65,13 +59,11 @@ def main():
         prob = clip_image(image_path, args.text)
         results[image_path] = prob
         
-        # --- ここが追加機能 ---
         # スコアがしきい値以上ならコピーする
         if prob >= args.threshold:
             filename = os.path.basename(image_path)
             dest_path = os.path.join(args.dest_dir, filename)
             
-            # メタデータを保持したままコピー
             shutil.copy2(image_path, dest_path)
             copied_count += 1
             print(f"[COPY] {filename} (Score: {prob:.4f})")
